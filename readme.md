@@ -1,15 +1,45 @@
-Prasyarat:
+# Implementasi SocketIO pada VueJS Client
+
+## Table of Content:
+1. [Prasyarat](#prasyarat)
+1. [Intro SocketIO](#intro-socketio)
+1. [Langkah Pembuatan](#langkah-pembuatan)
+    - [Inisialisasi - VueJS](#inisialisasi---vuejs)
+    - [Modifikasi Template Starter](#modifikasi-template-starter)
+    - [Memecah File Template](#memecah-file-template)
+    - [Menambahkan Router](#menambahkan-router)
+    - [Selesai Modifikasi Starter Template](#selesai-modifikasi-starter-template)
+    - [Memulai SocketIO - Server](#memulai-socketio---server)
+    - [Memulai SocketIO - Client](#memulai-socketio---client)
+1. [Referensi](#referensi)
+
+Pada pembelajaran ini
+
+### Prasyarat:
 - Mengerti dasar pembuatan backend nodejs dengan Express
 - Mengerti dasar dari VueJS
 - Mengerti penggunaan Vue Router dan VueX
-- Sudah menginstall nodejs dan package `vue-cli`
+- Sudah menginstall nodejs dan package `@vue/cli`
 
-Server
+### Intro SocketIO
+Diambil dari situs socket.io sendiri, Socket.IO adalah sebuah pustaka yang bisa menyediakan komunikasi yang *real-time*, dua arah, dan berbasis event antara browser dan server.
 
+Sehinggga dari kata kata di atas, dapat diketahui bahwa Socket.IO ini sendiri terdiri dari:
+- Sebuah NodeJS Server
+- Sebuah Pustaka JavaScript untuk Browser / NodeJS Client.
 
-Client
-[Inisialisasi - VueJS]
-1. vue create .
+Untuk referensi lebih detailnya, bisa dicoba baca pada tautan ini yah https://socket.io/docs/
+
+Contoh implementasi dari SocketIO sendiri ini misalnya adalah pada sesuatu yang berhubungan dengan *real time*, misalnya chat apps.
+
+Nah, jadi pada pembelajaran ini kita akan mencoba untuk mengimplementasikan Socket.IO ini pada NodeJS Server (berbasis Express) dan NodeJS Client (berbasis VueJS) dalam bentuk aplikasi chatting yah !
+
+**Disclaimer**:  
+Pada pembelajaran ini, Langkahnya benar benar dibuat dari NOL yah, namun, bagi yang ingin langsung mempelajari SocketIO nya saja, bisa langsung skip ke langkah [Memulai SocketIO - Server](#memulai-socketio---server) yah !
+
+### Langkah Pembuatan
+#### Inisialisasi - VueJS
+1. `vue create .`
 1. Generate project in current directory? `(Y)es`
 1. Please pick a preset: `Manually select features`
 1. Check the features needed for your project:
@@ -28,7 +58,7 @@ Client
 1. Generate tailwind.config.js? `minimal`
 1. Menunggu selesai generate file tambahan
 
-[Modifikasi Template Starter]
+#### Modifikasi Template Starter
 Selanjutnya kita akan memodifikasi file yang ada sehingga bisa sesuai dengan apa yang akan dibuat pada pembelajaran kali ini.
 1. Menghapus file `src/components/HelloWorld.vue`
 1. Menghapus file `src/views/About.vue` dan `src/views/Home.vue`
@@ -65,7 +95,7 @@ Selanjutnya kita akan memodifikasi file yang ada sehingga bisa sesuai dengan apa
 1. Apabila semuanya tercopy dan termodifikasi dengan baik, hasil tampilan saat ini adalah sebagai berikut:   
 <!-- ![Screenshot Image](assets/image01.png) -->
 
-[Memecah File Template]
+#### Memecah File Template
 1. Membuat dua buah file pada folder `src/views` dengan nama `LoginPage.vue` dan `ChatPage.vue`
 1. Pada `LoginPage.vue` dan `ChatPage.vue`, buatlah sebuah struktur awal dari VueJS Component sebagai berikut: 
     ```html
@@ -97,7 +127,7 @@ Selanjutnya kita akan memodifikasi file yang ada sehingga bisa sesuai dengan apa
     ```
 1. Apabila semuanya tercopy dengan baik, hasil tampilan saat ini adalah berupa layar abu abu saja.
 
-[Menambahkan Router]
+#### Menambahkan Router
 1. Membuka file `src/router/index.js` dan memodifikasi file sehingga menjadi seperti di bawah.
     ```js
     import Vue from "vue";
@@ -155,3 +185,114 @@ Selanjutnya kita akan memodifikasi file yang ada sehingga bisa sesuai dengan apa
     </template>
     ```
 1. Apabila semuanya tercopy dengan baik, hasil tampilan saat ini seharusnya sudah menjadi sama seperti yang awal template kita tadi, namun tanpa halaman chatnya. (hanya halaman login saja)
+<!-- ![Screenshot Image](assets/image01.png) -->
+
+#### Selesai Modifikasi Starter Template
+Sampai pada tahap ini artinya kita sudah sampai pada tahap dimana kita siap untuk mempelajari socketio pada pembelajaran kali ini.
+
+#### Memulai SocketIO - Server
+Selanjutnya kita akan membuat SocketIO server sederhana terlebih dahulu, yang bisa mengetahui ketika ada seorang user yang terkoneksi ke socketio server yang dibuat.
+
+1. Membuat sebuah folder yang terpisah dari client yang sudah dibuat sebelumnya (mis: `server`)
+1. Membuat sebuah file dengan nama `app.js`
+1. Menginisialisasi project dengan `npm init -y`
+1. Menginstall package yang dibutuhkan dengan `npm i express cors socket.io`
+1. Menginstall package dev yang dibutuhkan dengan `npm i -D nodemon`
+1. Membuka kembali file `app.js` dan menambahkan kode berikut
+    ```js
+    const express = require("express");
+    // Di sini kita akan menggunakan HTTP untuk mengikat express dan socketio
+    // dalam satu tempat yang sama
+    const { createServer } = require("http");
+    const { Server } = require("socket.io");
+
+    const app = express();
+    const httpServer = createServer(app);
+    // Ini adalah instance Socket.IO yang akan digunakan
+    const io = new Server(httpServer, {
+      // Pada SocketIO versi 4 ke atas, harus mendefinisikan CORS
+      cors: {
+        origin: "*",
+      }
+    });
+
+    // ini adalah "event" khusus socket io
+    // Terjadi ketika ada koneksi ke socket io
+    io.on("connection", (socket) => {
+      console.log("A user connected");
+
+      // Ini adalah event yang terjadi ketika user
+      // terputus dari socket io
+      socket.on("disconnect", () => {
+        console.log("A user disconnected");
+      });
+
+      // Ini adalah custom event buatan kita sendiri
+      socket.on("custom-event", (payload) => {
+        console.log("Terima payload: ", payload);
+      });
+    });
+
+    // listen http server pada port 3000
+    httpServer.listen(3000, () => {
+      console.log("Listening on port 3000");
+    });
+    ```
+1. Menjalankan kode di atas dengan `npx nodemon app.js`
+
+Sampai di sini kita sudah membuat server yang dapat mengetahui ketika ada seseorang terkoneksi dan terputus dari server kita.
+
+Selanjutnya kita akan memodifikasi client sehingga dapat menggunakan server socketio yang sudah dibuat ini.
+
+#### Memulai SocketIO - Client
+Sekarang kita akan mencoba untuk mengimplementasikan penggunakan SocketIO pada client.
+
+Untuk VueJS sendiri, sudah ada sebuah pustaka yang akan memudahkan kita dalam menggunakan SocketIO client atau istilahnya adalah `wrapper` SocketIO untuk VueJS. Pustaka ini bernama `vue-socket.io-extended` dan untuk referensinya dapat dilihat pada tautan berikut https://www.npmjs.com/package/vue-socket.io-extended
+
+1. Membuka kembali folder client
+1. Menginstall package yang dibutuhkan terlebih dahulu dengan cara `npm i vue-socket.io-extended socket.io-client`
+1. Membuka file `src/main.js` untuk menambahkan inisialisasi Socket.IO
+    ```js
+    import Vue from "vue";
+    import App from "./App.vue";
+    import router from "./router";
+    import store from "./store";
+    import "./assets/tailwind.css";
+
+    // Inisialisasi SocketIO
+    import VueSocketIOExt from "vue-socket.io-extended";
+    import { io } from "socket.io-client";
+
+    // Instance SocketIO dengan koneksi ke server
+    const socket = io("http://localhost:3000");
+
+    Vue.config.productionTip = false;
+
+    // Tambahkan pada "middleware" Instance Vue
+    Vue.use(VueSocketIOExt, socket)
+
+    new Vue({
+      router,
+      store,
+      render: (h) => h(App),
+    }).$mount("#app");
+    ```
+1. Membuka kembali file `src/App.vue` dan menambahkan `<script>` untuk menggunakan SocketIO pada VueJS
+    ```js
+    <script>
+    export default {
+      name: "App",
+      sockets: {
+        connect: function () {
+          console.log("connected", this.$socket);
+        },
+      },
+    };
+    </script>
+    ```
+Sampai di titik ini artinya kita sudah belajar untuk menggunakan SocketIO pada VueJS.
+
+### Referensi
+- https://socket.io/docs/v4/
+- https://socket.io/docs/v4/server-initialization#with-express
+- https://www.npmjs.com/package/vue-socket.io-extended
