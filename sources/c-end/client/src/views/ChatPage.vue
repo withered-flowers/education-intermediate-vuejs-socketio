@@ -21,7 +21,9 @@
         <h1>
           Welcome, <span class="font-semibold text-sm">{{ currentUser }}</span>
         </h1>
-        <a href="#" class="underline text-blue-500">Logout</a>
+        <a href="#" class="underline text-blue-500" @click="logoutHandler"
+          >Logout</a
+        >
       </div>
     </nav>
     <!-- End of NavBar Section -->
@@ -58,7 +60,7 @@
             "
           >
             <!-- Chat Content -->
-            <div class="p-4 min-w-full text-right">
+            <!-- <div class="p-4 min-w-full text-right">
               <div class="font-semibold">Name1</div>
               <div>Chat1</div>
             </div>
@@ -69,6 +71,15 @@
             <div class="p-4 min-w-full text-right">
               <div class="font-semibold">Name1</div>
               <div>Chat3</div>
+            </div> -->
+            <div
+              class="p4-min-w-full"
+              :class="[chat.user === currentUser ? 'text-right' : 'text-left']"
+              v-for="(chat, idx) in chats"
+              :key="chat.user + idx"
+            >
+              <div class="font-semibold">{{ chat.user }}</div>
+              <div>{{ chat.message }}</div>
             </div>
           </div>
           <div class="border-2 border-gray-400 rounded-xl p-2 h-1/6">
@@ -102,6 +113,9 @@ export default {
     currentUser() {
       return this.$store.state.currentUser;
     },
+    chats() {
+      return this.$store.state.chats;
+    },
   },
   data() {
     return {
@@ -112,6 +126,11 @@ export default {
     sendMessage() {
       this.$store.dispatch("sendMessage", this.chatMessage);
       this.chatMessage = "";
+    },
+    logoutHandler() {
+      this.$store.commit("SET_CURRENTUSERNAME", "");
+      localStorage.clear();
+      this.$router.push("/login");
     },
   },
 };

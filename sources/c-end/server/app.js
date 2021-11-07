@@ -54,7 +54,11 @@ io.on("connection", (socket) => {
 
     // Server akan mengembalikan respon ke client berupa
     // Seluruh chat yang ada
-    socket.emit("receiveMessageFromServer", arrOfChats);
+
+    // Pehatikan di sini kita menggunakan io, bukan socket,
+    // untuk menargetkan seluruh client yang sedang ada
+    // terhubung ke server
+    io.emit("receiveMessageFromServer", arrOfChats);
   });
 });
 

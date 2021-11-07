@@ -564,6 +564,94 @@ Selanjutnya kita akan membuat aplikasi `Maricet` ini agar bisa berjalan dengan b
       },
     }
     ```
+1. Membuka file server `app.js` dan mengimplementasikan event `sendMessageToServer` di dalam `io.on('connection')`
+    ```js
+    ...
+    // Ini adalah custom event buatan kita sendiri
+    // Untuk menerima message yang dikirim dari client
+    socket.on("sendMessageToServer", (payload) => {
+      arrOfChats.push(payload);
+
+      // Server akan mengembalikan respon ke client berupa
+      // Seluruh chat yang ada
+
+      // Pehatikan di sini kita menggunakan io, bukan socket,
+      // untuk menargetkan seluruh client yang sedang ada
+      // terhubung ke server
+      io.emit("receiveMessageFromServer", arrOfChats);
+    });
+    ...
+    ```
+1. Membuka file client `src/views/ChatPage.vue` dan menambahkan kode untuk:
+    - Mengcomment section `<!-- Chat Content -->`
+    - Menambahkan v-for untuk menampilkan `chats`
+    - Menambahkan v-on click pada anchor `Logout` dengan nama `logoutHandler`
+    - Menambahkan computed untuk mengambil state `chats` dari store
+    - Menambhakann methods `logoutHandler`
+    ```html
+    ...
+    <!-- Right NavBar -->
+    <div class="my-auto mr-2 flex flex-row gap-2">
+      <h1>
+        Welcome, <span class="font-semibold text-sm">{{ currentUser }}</span>
+      </h1>
+      <a href="#" class="underline text-blue-500" @click="logoutHandler"
+        >Logout</a
+      >
+    </div>
+    ...
+
+    <!-- Chat Content -->
+    <!-- <div class="p-4 min-w-full text-right">
+      <div class="font-semibold">Name1</div>
+      <div>Chat1</div>
+    </div>
+    <div class="p-4 min-w-full text-left">
+      <div class="font-semibold">Name2</div>
+      <div>Chat2</div>
+    </div>
+    <div class="p-4 min-w-full text-right">
+      <div class="font-semibold">Name1</div>
+      <div>Chat3</div>
+    </div> -->
+    <div
+      class="p4-min-w-full"
+      :class="[chat.user === currentUser ? 'text-right' : 'text-left']"
+      v-for="(chat, idx) in chats"
+      :key="chat.user + idx"
+    >
+      <div class="font-semibold">{{ chat.user }}</div>
+      <div>{{ chat.message }}</div>
+    </div>
+    ``` 
+    ```js
+    ...
+    computed: {
+      ...
+      chats() {
+        return this.$store.state.chats;
+      },
+    },
+    methods: {
+      ...,
+      logoutHandler() {
+        this.$store.commit("SET_CURRENTUSERNAME", "");
+        localStorage.clear();
+        this.$router.push("/login");
+      },
+    }
+    ```
+Sampai di sini apabila kita menjalankan kode kita kembali, maka kita sudah bisa melihat (khususnya dengan 2 browser yang berbeda), bahwa antar user dalam browser yang berbeda tersebut sudah bisa melakukan chat satu sama lainnya, dan tampilannya ini secara "realtime", menakjubkan bukan?
+
+Selamat mempelajari ini lebih lanjut yah !
+
+Masih cukup banyak yang bisa diekplorasi dari sini yah, misalnya:
+- Pembagian Room / Channel dari orang yang sedang login, sehingga chatnya bisa ada "kamar" yang berbeda
+- Menampilkan / mensortir date dan time dari chat yang dikirim
+- Menggunakan database untuk menyimpan data data yang ada lainnya.
+- dst.
+
+Selamat mencoba !
 
 ### Referensi
 - https://socket.io/docs/v4/
