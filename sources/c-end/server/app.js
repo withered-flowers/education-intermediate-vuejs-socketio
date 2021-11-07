@@ -46,6 +46,16 @@ io.on("connection", (socket) => {
 
     console.log(arrOfUsers);
   });
+
+  // Ini adalah custom event buatan kita sendiri
+  // Untuk menerima message yang dikirim dari client
+  socket.on("sendMessageToServer", (payload) => {
+    arrOfChats.push(payload);
+
+    // Server akan mengembalikan respon ke client berupa
+    // Seluruh chat yang ada
+    socket.emit("receiveMessageFromServer", arrOfChats);
+  });
 });
 
 // listen http server pada port 3000

@@ -18,7 +18,9 @@
       <h1 class="text-xl font-semibold ml-2">Maricet</h1>
       <!-- Right NavBar -->
       <div class="my-auto mr-2 flex flex-row gap-2">
-        <h1>Welcome, <span class="font-semibold text-sm">[Name]</span></h1>
+        <h1>
+          Welcome, <span class="font-semibold text-sm">{{ currentUser }}</span>
+        </h1>
         <a href="#" class="underline text-blue-500">Logout</a>
       </div>
     </nav>
@@ -79,7 +81,9 @@
                 p-2
                 focus:outline-none focus:ring focus:border-blue-200
               "
+              v-model="chatMessage"
               placeholder="Insert chat here and press enter"
+              @keyup.enter="sendMessage"
             ></textarea>
           </div>
         </div>
@@ -93,6 +97,23 @@
 <script>
 export default {
   name: "ChatPage",
+  computed: {
+    // Untuk mengambil nama currentUser yang ada di state
+    currentUser() {
+      return this.$store.state.currentUser;
+    },
+  },
+  data() {
+    return {
+      chatMessage: "",
+    };
+  },
+  methods: {
+    sendMessage() {
+      this.$store.dispatch("sendMessage", this.chatMessage);
+      this.chatMessage = "";
+    },
+  },
 };
 </script>
 

@@ -6,10 +6,18 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     currentUser: "",
+    chats: [],
   },
   mutations: {
     SET_CURRENTUSER(state, user) {
       state.currentUser = user;
+    },
+    // Ini hanyalah sebuah contoh saja dimana server socketio
+    // bisa langsung memanggil mutation
+    // untuk mengubah state yang ada
+    SOCKET_RECEIVEMESSAGEFROMSERVER(state, chats) {
+      console.log("Chats from server", chats);
+      state.chats = chats;
     },
   },
   actions: {
@@ -42,6 +50,13 @@ export default new Vuex.Store({
     setUsername({ commit }, payload) {
       commit("SET_CURRENTUSER", payload);
       this._vm.$socket.client.emit("setUsername", payload);
+    },
+    sendMessage(_, payload) {
+      this._vm.$socket.client.emit("sendMessageToServer", {
+        user: this.state.currentUser,
+        // trim untuk menghilangkan enter di akhir
+        message: payload.trim(),
+      });
     },
   },
   modules: {},

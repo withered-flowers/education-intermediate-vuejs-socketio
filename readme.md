@@ -492,7 +492,78 @@ Selanjutnya kita akan membuat aplikasi `Maricet` ini agar bisa berjalan dengan b
     }
     ```
 1. Sampai pada tahap ini artinya kita sudah berhasil untuk mengimplementasikan list of user ke sisi server. selanjutnya kita akan membuat Chat nya !
-
+1. Membuka file client `src/views/ChatPage.vue`, dan menambahkan kode untuk menampilkan state `currentUser` dari store
+    ```html
+      <!-- Modifikasi line ini untuk menambahkan {{ currentUser }} -->
+      <h1>
+        Welcome, <span class="font-semibold text-sm">{{ currentUser }}</span>
+      </h1>
+    ```
+    ```js
+    <script>
+    export default {
+      name: "ChatPage",
+      computed: {
+        // Untuk mengambil nama currentUser yang ada di state
+        currentUser() {
+          return this.$store.state.currentUser;
+        },
+      },
+    };
+    </script>
+    ```
+1. Membuka file client `src/views/ChatPage.vue`, dan menambahkan kode untuk:
+    - Menambahkan v-model pada text area dengan nama `chatMessage`
+    - Menambahkan v-on:keyup.enter pada text area dengan nama `sendMessage`
+    - Menambahkan data dengan nama `chatMessage`
+    - Mengimplementasikan method `sendMessage`
+    ```js
+    <script>
+    ...
+      data() {
+        return {
+          chatMessage: "",
+        };
+      },
+      methods: {
+        sendMessage() {
+          this.$store.dispatch("sendMessage", this.chatMessage);
+          this.chatMessage = "";
+        },
+      },
+    ...
+    </script>
+    ```
+1. Membuka file client `src/store.index.js` dan menambahkan kode untuk:
+    - Menambahkan state `chats`
+    - Menambahkan mutation `SOCKET_RECEIVEMESSAGEFROMSERVER`
+    - Menambahkan action `sendMessage`
+    ```js
+    state: {
+      ...
+      chats: [],
+    },
+    mutations: {
+      ...
+      // Ini hanyalah sebuah contoh saja dimana server socketio
+      // bisa langsung memanggil mutation
+      // untuk mengubah state yang ada
+      SOCKET_RECEIVEMESSAGEFROMSERVER(state, chats) {
+        console.log("Chats from server", chats);
+        state.chats = chats;
+      },
+    },
+    actions: {
+      ...
+      sendMessage(_, payload) {
+        this._vm.$socket.client.emit("sendMessageToServer", {
+          user: this.state.currentUser,
+          // trim untuk menghilangkan enter di akhir
+          message: payload.trim(),
+        });
+      },
+    }
+    ```
 
 ### Referensi
 - https://socket.io/docs/v4/
