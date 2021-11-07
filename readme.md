@@ -154,3 +154,4 @@ Selanjutnya kita akan memodifikasi file yang ada sehingga bisa sesuai dengan apa
       </div>
     </template>
     ```
+1. Apabila semuanya tercopy dengan baik, hasil tampilan saat ini seharusnya sudah menjadi sama seperti yang awal template kita tadi, namun tanpa halaman chatnya. (hanya halaman login saja)
