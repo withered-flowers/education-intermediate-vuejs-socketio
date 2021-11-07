@@ -11,7 +11,11 @@
       "
     >
       <h1 class="text-3xl font-semibold">Welcome to Maricet</h1>
-      <form action="#" class="flex flex-col place-items-center">
+      <form
+        action="#"
+        class="flex flex-col place-items-center"
+        @submit.prevent="submitUsernameHandler"
+      >
         <label for="username" class="p-2">Please enter your Username</label>
         <input
           type="text"
@@ -26,6 +30,7 @@
           "
           id="username"
           placeholder="Username"
+          v-model="username"
         />
         <button
           class="
@@ -49,6 +54,18 @@
 <script>
 export default {
   name: "LoginPage",
+  data() {
+    return {
+      username: "",
+    };
+  },
+  methods: {
+    submitUsernameHandler() {
+      localStorage.setItem("username", this.username);
+      this.$store.dispatch("setUsername", this.username);
+      this.$router.push("/");
+    },
+  },
 };
 </script>
 

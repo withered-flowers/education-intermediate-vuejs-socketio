@@ -4,8 +4,14 @@ import Vuex from "vuex";
 Vue.use(Vuex);
 
 export default new Vuex.Store({
-  state: {},
-  mutations: {},
+  state: {
+    currentUser: "",
+  },
+  mutations: {
+    SET_CURRENTUSER(state, user) {
+      state.currentUser = user;
+    },
+  },
   actions: {
     // JANGAN menggunakan arrow function
     // karena nanti `this` nya bisa mengarah
@@ -32,6 +38,10 @@ export default new Vuex.Store({
     // maka tidak menggunakan awalan / prefix socket_
     sendCustomEventToServer(_, payload) {
       this._vm.$socket.client.emit("customEventFromClient", payload);
+    },
+    setUsername({ commit }, payload) {
+      commit("SET_CURRENTUSER", payload);
+      this._vm.$socket.client.emit("setUsername", payload);
     },
   },
   modules: {},

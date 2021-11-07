@@ -252,6 +252,7 @@ Selanjutnya kita akan memodifikasi client sehingga dapat menggunakan server sock
 #### Memulai SocketIO - Client
 
 [Standard Components]
+
 Sekarang kita akan mencoba untuk mengimplementasikan penggunakan SocketIO pada client.
 
 Untuk VueJS sendiri, sudah ada sebuah pustaka yang akan memudahkan kita dalam menggunakan SocketIO client atau istilahnya adalah `wrapper` SocketIO untuk VueJS. Pustaka ini bernama `vue-socket.io-extended` dan untuk referensinya dapat dilihat pada tautan berikut https://www.npmjs.com/package/vue-socket.io-extended
@@ -329,6 +330,7 @@ Sampai di titik ini artinya kita sudah belajar untuk menggunakan SocketIO pada V
 Namun karena kita di sini sudah menggunakan VueX, bagaimanakah cara baiknya dalam menintegrasikan SocketIO ini dengan VueX yang ada?
 
 [VueX]
+
 1. Membuka kembali file `src/main.js` dan memodifikasi kode agar bisa menggunakan store pada Socket.IO
     ```js
     // Modifikasi kode dengan menambahkan store
@@ -425,6 +427,72 @@ Namun karena kita di sini sudah menggunakan VueX, bagaimanakah cara baiknya dala
 Sampai di sini artinya kita sudah selesai untuk menggabungkan VueX dan SocketIO secara sederhana pada VueJS.
 
 Selanjutnya kita akan membuat aplikasi `Maricet` ini agar bisa berjalan dengan baik yah !
+
+[Start Making Maricet]
+
+1. Mari kita buat gambaran kasar dari aplikasi `Maricet` ini terlebih dahulu. Alur dari aplikasi ini adalah:
+    - User akan mengunjungi apps ini, kemudian meng-inputkan username yang dimiliki.
+    - Setelah diinput, username akan dikirimkan ke server dan akan disimpan di dalam localStorage dengan nama `username`.
+    - Setelah itu, User akan diarahkan ke halaman Chat Room, dimana User bisa melakukan Chat dengan user lainnya.
+    - Pada saat User menekan tombol enter pada text area yang ada di halaman Chat Room, maka akan mengirimkan pesan tersebut ke server dan akan di"blast" ke User lainnya yang sedang menggunakan aplikasi ini juga.
+1. Membuka file server `app.js` dan menambahkan kode berikut:
+    ```js
+    ...
+
+    let arrOfUsers = [];
+    let arrOfChats = [];
+    ...
+
+    // di dalam socket.io io.on("connection")
+    socket.on("setUsername", (payload) => {
+      arrOfUsers.push({
+        username: payload,
+        status: "online",
+      });
+
+      console.log(arrOfUsers);
+    });
+    ...
+    ```
+1. Membuka file client `src/views/LoginPage.vue` dan menambahkan sebuah v-on:submit-prevent pada form dengan nama `submitUsernameHandler`, menambahkan sebuah v-model pada input `username` dengan nama `username` dan menambahkan methods yang diisi sebagai berikut:
+    ```js
+    <script>
+    export default {
+      name: "LoginPage",
+      data() {
+        return {
+          username: "",
+        };
+      },
+      methods: {
+        submitUsernameHandler() {
+          localStorage.setItem("username", this.username);
+          this.$store.dispatch("setUsername", this.username);
+          this.$router.push("/");
+        },
+      },
+    };
+    </script>
+    ```
+1. Membuka file client `src/store/index.js` dan menambahkan sebuah state dengan nama `currentUser`, sebuah mutation dengan nama `SET_CURRENTUSER` dan sebuah action dengan nama `setUsername`
+    ```js
+    state: {
+      currentUser: "",
+    },
+    mutations: {
+      SET_CURRENTUSER(state, user) {
+        state.currentUser = user;
+      },
+    },
+    actions: {
+      setUsername({ commit }, payload) {
+        commit("SET_CURRENTUSER", payload);
+        this._vm.$socket.client.emit("setUsername", payload);
+      },
+    }
+    ```
+1. Sampai pada tahap ini artinya kita sudah berhasil untuk mengimplementasikan list of user ke sisi server. selanjutnya kita akan membuat Chat nya !
+
 
 ### Referensi
 - https://socket.io/docs/v4/

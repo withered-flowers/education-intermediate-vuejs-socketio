@@ -14,6 +14,9 @@ const io = new Server(httpServer, {
   },
 });
 
+let arrOfUsers = [];
+let arrOfChats = [];
+
 // ini adalah "event" khusus socket io
 // Terjadi ketika ada koneksi ke socket io
 io.on("connection", (socket) => {
@@ -33,6 +36,15 @@ io.on("connection", (socket) => {
     // Server akan mengirimkan kembalian ke client
     // Dengan nama event customEventFromServer
     socket.emit("customEventFromServer", "Kembalian server");
+  });
+
+  socket.on("setUsername", (payload) => {
+    arrOfUsers.push({
+      username: payload,
+      status: "online",
+    });
+
+    console.log(arrOfUsers);
   });
 });
 
