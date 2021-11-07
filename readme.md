@@ -219,7 +219,7 @@ Selanjutnya kita akan membuat SocketIO server sederhana terlebih dahulu, yang bi
     // ini adalah "event" khusus socket io
     // Terjadi ketika ada koneksi ke socket io
     io.on("connection", (socket) => {
-      console.log("A user connected");
+      console.log("A user connected", socket.id);
 
       // Ini adalah event yang terjadi ketika user
       // terputus dari socket io
@@ -228,8 +228,13 @@ Selanjutnya kita akan membuat SocketIO server sederhana terlebih dahulu, yang bi
       });
 
       // Ini adalah custom event buatan kita sendiri
-      socket.on("custom-event", (payload) => {
+      // Server akan mendengar ketika client mentrigger event ini
+      socket.on("customEventFromClient", (payload) => {
         console.log("Terima payload: ", payload);
+
+        // Server akan mengirimkan kembalian ke client
+        // Dengan nama event customEventFromServer
+        socket.emit("customEventFromServer", "Kembalian server");
       });
     });
 
@@ -245,6 +250,8 @@ Sampai di sini kita sudah membuat server yang dapat mengetahui ketika ada seseor
 Selanjutnya kita akan memodifikasi client sehingga dapat menggunakan server socketio yang sudah dibuat ini.
 
 #### Memulai SocketIO - Client
+
+[Standard Components]
 Sekarang kita akan mencoba untuk mengimplementasikan penggunakan SocketIO pada client.
 
 Untuk VueJS sendiri, sudah ada sebuah pustaka yang akan memudahkan kita dalam menggunakan SocketIO client atau istilahnya adalah `wrapper` SocketIO untuk VueJS. Pustaka ini bernama `vue-socket.io-extended` dan untuk referensinya dapat dilihat pada tautan berikut https://www.npmjs.com/package/vue-socket.io-extended
@@ -283,14 +290,141 @@ Untuk VueJS sendiri, sudah ada sebuah pustaka yang akan memudahkan kita dalam me
     export default {
       name: "App",
       sockets: {
+        // Untuk mendengarkan ketika ada event "connect / connection" dari server
         connect: function () {
           console.log("connected", this.$socket);
         },
+        // Untuk mendengarkan ketika ada event "disconnect / disconnection" dari server
+        disconnect: function () {
+          console.log("disconnected", this.$socket);
+        },
+        // Untuk mendengarkan ketika ada custom event "customEvent" dari server
+        customEventFromServer: function (payload) {
+          console.log("customEventFromServer", payload);
+        },
+      },
+      // Misalnya di sini kita menggunakan lifecycle created untuk mengirimkan event
+      // "customEventFromClient" ke server
+      created() {
+        this.$socket.client.emit("customEventFromClient", {
+          message: "Halo from client",
+        });
       },
     };
     </script>
     ```
+1. Menjalankan server dengan `npx nodemon app.js` dan menjalankan client dengan `npm run serve`, dan lihatlah hasilnya pada console log baik pada browser maupun pada terminal (untuk server). Apabila sampai tahap ini sudah benar, maka seharusnya pada terminal server dan client akan muncul tulisan berikut:
+    ```sh
+    # SERVER (terminal)
+    A user connected <socket.id>
+    Terima payload: { message: 'Halo from client' }
+
+    # CLIENT (browser)
+    connected <instance socket.io>
+    customEventFromServer Kembalian Server
+    ```
+
 Sampai di titik ini artinya kita sudah belajar untuk menggunakan SocketIO pada VueJS.
+
+Namun karena kita di sini sudah menggunakan VueX, bagaimanakah cara baiknya dalam menintegrasikan SocketIO ini dengan VueX yang ada?
+
+[VueX]
+1. Membuka kembali file `src/main.js` dan memodifikasi kode agar bisa menggunakan store pada Socket.IO
+    ```js
+    // Modifikasi kode dengan menambahkan store
+    Vue.use(VueSocketIOExt, socket, { store });
+    ```
+1. Membuka kembali file `src/App.vue` dan memodifikasi tag `<script>` yang ada
+    ```js
+    <script>
+    export default {
+      name: "App",
+      // Comment dari sini karena akan dipindahkan ke VueX Store
+      // sockets: {
+      //   // Untuk mendengarkan ketika ada event "connect / connection" dari server
+      //   connect: function () {
+      //     console.log("connected", this.$socket);
+      //   },
+      //   // Untuk mendengarkan ketika ada event "disconnect / disconnection" dari server
+      //   disconnect: function () {
+      //     console.log("disconnected", this.$socket);
+      //   },
+      //   // Untuk mendengarkan ketika ada custom event "customEvent" dari server
+      //   customEventFromServer: function (payload) {
+      //     console.log("customEventFromServer", payload);
+      //   },
+      // },
+      // // Misalnya di sini kita menggunakan lifecycle created untuk mengirimkan event
+      // // "customEventFromClient" ke server
+      // created() {
+      //   this.$socket.client.emit("customEventFromClient", {
+      //     message: "Halo from client",
+      //   });
+      // },
+    };
+    </script>
+    ```
+1. Selanjutnya kita akan membaca dokumentasi dari Vue Socket.IO Extended. Pada dokumentasi ini, diberitahukan CARA PENULISAN mutation ataupun action berdasarkan nama event yang ingin didengar dari server.
+    | Server Event |	Mutation           |	Action             |
+    | ------------ | ------------------- | --------------------|
+    | chat message | SOCKET_CHAT MESSAGE | socket_chatMessage  |
+    | chat_message | SOCKET_CHAT_MESSAGE | socket_chatMessage  |
+    | chatMessage  | SOCKET_CHATMESSAGE  | socket_chatMessage  |
+    | CHAT_MESSAGE | SOCKET_CHAT_MESSAGE | socket_chatMessage  |
+1. Berdasarkan kode yang dibuat sebelumnya, kita memiliki beberapa event yang harus didengar, dan beberapa event yang harus dikirimkan, yaitu:
+    - Dengar: `connect`, `disconnect`, dan `customEventFromServer`
+    - Kirim: `customEventFromClient`
+1. Membuat kode pada VueX `src/store/index.js` sebagai berikut:
+    ```js
+    ...
+    export default new Vuex.Store({
+      state: {},
+      mutations: {},
+      actions: {
+        // JANGAN menggunakan arrow function
+        // karena nanti `this` nya bisa mengarah
+        // pada Object yang salah
+
+        // Mendengar event "connect" dari server
+        socket_connect() {
+          // Perhatikan di sini cara untuk mengakses $socket menjadi
+          // berbeda, karena harus menggunakan tambahan _vm
+          console.log("connected", this._vm.$socket);
+        },
+        // Mendengar event "disconnect" dari server
+        socket_disconnect() {
+          console.log("disconnected", this._vm.$socket);
+        },
+        // mendengar event "customEventFromServer" dari server
+        // Karena di sini kita tidak menggunakan si context pada vuex action
+        // maka context diganti _
+        socket_customEventFromServer(_, payload) {
+          console.log("customEventFromServer", payload);
+        },
+        // Karena di sini kita akan mengirimkan (emit)
+        // dan tidak mendengar event
+        // maka tidak menggunakan awalan / prefix socket_
+        sendCustomEventToServer(_, payload) {
+          this._vm.$socket.client.emit("customEventFromClient", payload);
+        },
+      },
+      modules: {},
+    });
+    ```
+1. Memodifikasi kembali pada `src/App.vue` menjadi sebagai berikut:
+    ```js
+    export default {
+      name: "App",
+      created() {
+        this.$store.dispatch("sendCustomEventToServer", {
+          message: "Halo from client",
+        });
+      },
+    };
+    ```
+Sampai di sini artinya kita sudah selesai untuk menggabungkan VueX dan SocketIO secara sederhana pada VueJS.
+
+Selanjutnya kita akan membuat aplikasi `Maricet` ini agar bisa berjalan dengan baik yah !
 
 ### Referensi
 - https://socket.io/docs/v4/

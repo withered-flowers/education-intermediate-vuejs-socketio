@@ -13,7 +13,8 @@ const socket = io("http://localhost:3000");
 
 Vue.config.productionTip = false;
 
-Vue.use(VueSocketIOExt, socket);
+// Modifikasi kode dengan menambahkan store
+Vue.use(VueSocketIOExt, socket, { store });
 
 new Vue({
   router,

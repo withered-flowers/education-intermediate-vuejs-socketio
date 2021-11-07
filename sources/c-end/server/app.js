@@ -26,8 +26,13 @@ io.on("connection", (socket) => {
   });
 
   // Ini adalah custom event buatan kita sendiri
-  socket.on("custom-event", (payload) => {
+  // Server akan mendengar ketika client mentrigger event ini
+  socket.on("customEventFromClient", (payload) => {
     console.log("Terima payload: ", payload);
+
+    // Server akan mengirimkan kembalian ke client
+    // Dengan nama event customEventFromServer
+    socket.emit("customEventFromServer", "Kembalian server");
   });
 });
 
